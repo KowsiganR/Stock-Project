@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://media.gettyimages.com/id/1487894858/photo/candlestick-chart-and-data-of-financial-market.jpg?b=1&s=170667a&w=0&k=20&c=iwQM0ozj7upM-_7CUEjZ2veIY3ljlB8m3PbijouIyVM='); /* Updated background image URL */
+            background-size: cover;
+            background-position: center;
+            color: #ffffff; /* White text for better contrast */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(30, 30, 30, 0.8); /* Semi-transparent dark background */
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.1); /* Soft shadow for depth */
+        }
+
+        h1 {
+            color: #00ccff; /* Cyan heading color for a futuristic touch */
+            text-align: center;
+            font-size: 48px; /* Larger font size for impact */
+            margin-bottom: 20px;
+            text-transform: uppercase; /* Uppercase text for a modern look */
+        }
+
+        input[type="file"] {
+            background-color: #1f1f1f; /* Dark input background */
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            color: #ffffff; /* White text for better visibility */
+            width: 100%;
+            margin-bottom: 20px;
+            box-sizing: border-box; /* Include padding and border in element's total width */
+            border-radius: 5px;
+            outline: none; /* Remove default focus outline */
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background-color: #00ccff; /* Cyan button background */
+            color: #ffffff; /* White text */
+            padding: 15px 20px; /* Larger padding for better clickability */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease; /* Smooth transition on hover */
+            outline: none;
+        }
+
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background-color: #0099cc; /* Darker cyan on hover */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        th, td {
+            border: 1px solid #666666; /* Light gray border */
+            text-align: left;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #222222; /* Dark gray background for table headers */
+            color: #00ccff; /* Cyan text */
+            text-transform: uppercase; /* Uppercase headers */
+        }
+
+        .predicted-price {
+            color: #66ff33; /* Light green predicted price */
+            font-weight: bold;
+            font-size: 20px; /* Larger font size for predicted price */
+        }
+
+        .marquee-container {
+            margin-bottom: 20px;
+        }
+
+        .marquee {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .marquee span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 5s linear infinite; /* Faster speed */
+        }
+
+        .marquee span:nth-child(odd) {
+            font-weight: bold; /* Make odd headlines bold */
+        }
+
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+        .stock-image {
+            max-width: 50%;
+            display: block;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Predictor</h1>
+        <p style="text-align: center;">Enter your data:</p> <!-- Added instruction for entering data -->
+        <input type="file" accept=".csv" id="csvInput">
+        <img class="stock-image" id="stockImage" src="https://cdn0.iconfinder.com/data/icons/stock-market/512/bull_trend-512.png" alt="Stock Logo"> <!-- Updated stock logo URL -->
+        <div class="marquee-container">
+            <div class="marquee">
+                <span>Latest News: Stock market surges to new highs!</span>
+            </div>
+            <div class="marquee">
+                <span>Breaking News: Tech stocks rally after earnings reports!</span>
+            </div>
+            <div class="marquee">
+                <span>Important Announcement: Fed Reserve to raise interest rates!</span>
+            </div>
+            <div class="marquee">
+                <span>Economic Report: GDP growth exceeds expectations!</span>
+            </div>
+            <div class="marquee">
+                <span>Market Update: Volatility expected ahead of earnings season!</span>
+            </div>
+        </div>
+        <table id="stockData">
+            <thead>
+                <tr>
+                    <th>Days</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be inserted here dynamically -->
+            </tbody>
+        </table>
+        <p>PREDICTED PRICE FOR DAY 6: <span class="predicted-price" id="predictedPrice">100 ₹</span></p> <!-- Updated predicted price -->
+    </div>
+    <div class="footer">Created by Kowsigan R</div>
+    <script>
+        function calculateSlope(data) {
+            let sumX = 0;
+            let sumY = 0;
+            let sumXY = 0;
+            let sumX2 = 0;
+
+            for (const point of data) {
+                sumX += point.days;
+                sumY += point.price;
+                sumXY += point.days * point.price;
+                sumX2 += point.days * point.days;
+            }
+
+            const slope = (sumXY - sumX * sumY / data.length) / (sumX2 - sumX * sumX / data.length);
+            return slope;
+        }
+
+        function calculateIntercept(data, slope) {
+            const averageX = data.reduce((acc, point) => acc + point.days, 0) / data.length;
+            const averageY = data.reduce((acc, point) => acc + point.price, 0) / data.length;
+            const intercept = averageY - slope * averageX;
+            return intercept;
+        }
+
+        function predictPrice(days, slope, intercept) {
+            return slope * days + intercept;
+        }
+
+        function renderData(data) {
+            const tableBody = document.querySelector('#stockData tbody');
+            tableBody.innerHTML = '';
+            data.forEach(point => {
+                tableBody.innerHTML += `<tr><td>${point.days}</td><td>${point.price}</td></tr>`;
+            });
+        }
+
+        document.getElementById('csvInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const csv = event.target.result;
+                const data = [];
+                const rows = csv.split('\n');
+                rows.forEach(row => {
+                    const [days, price] = row.split(',');
+                    data.push({ days: parseInt(days), price: parseInt(price) });
+                });
+                renderData(data);
+                const slope = calculateSlope(data);
+                const intercept = calculateIntercept(data, slope);
+                const predictedPrice = predictPrice(6, slope, intercept); // Predict price for day 6
+                document.getElementById("predictedPrice").innerText = predictedPrice + " ₹"; // Updated to show rupee symbol
+            };
+            reader.readAsText(file);
+        });
+
+        // Sample data for demonstration
+        const sampleData = [
+            { days: 1, price: 80 },
+            { days: 2, price: 85 },
+            { days: 3, price: 90 },
+            { days: 4, price: 95 },
+            { days: 5, price: 100 }
+        ];
+
+        renderData(sampleData);
+    </script>
+</body>
+</html>
